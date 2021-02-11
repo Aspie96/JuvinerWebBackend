@@ -1,4 +1,4 @@
-package com.juviner.juvinerwebdemo.sectionsservice;
+package com.juviner.juvinerwebdemo.sectionservice;
 
 public class Root {
     private final String description;

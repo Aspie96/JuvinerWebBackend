@@ -1,4 +1,4 @@
-package com.juviner.juvinerwebdemo.sectionsservice;
+package com.juviner.juvinerwebdemo.sectionservice;
 
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;

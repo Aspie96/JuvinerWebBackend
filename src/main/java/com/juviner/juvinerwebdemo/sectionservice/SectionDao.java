@@ -1,4 +1,4 @@
-package com.juviner.juvinerwebdemo.sectionsservice;
+package com.juviner.juvinerwebdemo.sectionservice;
 
 import org.springframework.data.repository.CrudRepository;
 
