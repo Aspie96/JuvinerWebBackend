@@ -58,6 +58,16 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+                                <configuration>
+                                    <mainClass>package com.juvinerwebbackend.api.ApiApplication</mainClass>
+                                </configuration>
+                                <executions>
+                            <execution>
+                                <goals>
+                                    <goal>repackage</goal>
+                                </goals>
+                            </execution>
+                       </executions>
 			</plugin>
 		</plugins>
 	</build>
