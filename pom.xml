@@ -78,7 +78,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
                                 <configuration>
-                                    <mainClass>com.juviner.juvinerwebdemo.sectionservice.ThreadserviceApplication</mainClass>
+                                    <mainClass>com.juviner.juvinerweb.threadservice.ThreadserviceApplication</mainClass>
                                 </configuration>
                                  <executions>
                             <execution>
