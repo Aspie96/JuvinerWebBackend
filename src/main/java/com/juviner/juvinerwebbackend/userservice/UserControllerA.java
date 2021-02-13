@@ -24,11 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping
 public class UserControllerA {
     private final UserDao userDao;
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     public UserControllerA(UserDao userDao) {
         this.userDao = userDao;
+        this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
     @GetMapping("/{username}")
@@ -77,7 +77,7 @@ public class UserControllerA {
         User u = this.userDao.save(newU);
         return u;
     }
-    
+   
     @PostMapping("/register")
     public User register(@RequestBody Map<String, Object> body) {
         User user = new User((String)body.get("username"), (String)body.get("description"), (String)body.get("email"), passwordEncoder.encode((String)body.get("password")), null, null);
