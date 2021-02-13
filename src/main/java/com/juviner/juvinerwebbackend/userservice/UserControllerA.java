@@ -81,6 +81,6 @@ public class UserControllerA {
     @PostMapping("/register")
     public User register(@RequestBody Map<String, Object> body) {
         User user = new User((String)body.get("username"), (String)body.get("description"), (String)body.get("email"), passwordEncoder.encode((String)body.get("password")), null, null);
-        return user;
+        return this.userDao.save(user);
     }
 }
