@@ -15,7 +15,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="section")
+@Table(name="sections")
 public class Section implements Serializable {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
