@@ -21,7 +21,6 @@ public class Section implements Serializable {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private int id;
-    @Lob
     @Column(nullable=false)
     private String name;
     @OneToMany(mappedBy="section")
