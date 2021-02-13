@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.Table;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,6 +23,7 @@ public class User implements Serializable, UserDetails {
     private int id;
     @Column(nullable=false)
     private String username;
+    @Lob
     @Column(nullable=false)
     private String description;
     @Column(nullable=false)
