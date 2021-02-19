@@ -7,4 +7,4 @@ RUN mvn clean package -Dmaven.test.skip
 
 FROM openjdk:8-jdk-alpine
 COPY --from=0 /app/target/*.jar app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+ENTRYPOINT ["java","-Xmx300m","-Xss512k","-XX:+UseContainerSupport","-jar","/app.jar"]
