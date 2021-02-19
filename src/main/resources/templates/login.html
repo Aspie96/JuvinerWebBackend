@@ -1,0 +1,20 @@
+<h1 class="pt-5 pb-2">Log in</h1>
+<form action="/login" method="post" onsubmit="return onLogin(this)">
+    {{#error}}
+        <div class="alert alert-danger" role="alert">
+            Username or password incorrect!
+        </div>
+    {{/error}}
+    <div class="form-group">
+        <label for="usernameInput">Username</label>
+        <input name="username" type="text" class="form-control" id="usernameInput" />
+    </div>
+    <div class="form-group">
+        <label for="passwordInput">Password</label>
+        <input name="password" type="password" class="form-control" id="passwordInput" />
+    </div>
+    {{#_csrf}}
+        <input type="hidden" name="{{parameterName}}" value="{{token}}" />
+    {{/_csrf}}
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>

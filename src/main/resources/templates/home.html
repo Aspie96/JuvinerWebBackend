@@ -1,0 +1,22 @@
+{{#root}}
+<div class="px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+    <h1 class="display-4">Juviner</h1>
+    <p class="lead">{{description}}</p>
+</div>
+{{#sections}}
+    <div class="card">
+        <h2 class="card-header font-weight-normal h6">{{name}}</h2>
+        <ul class="list-group list-group-flush">
+            {{#categories}}
+                <li class="py-1 list-group-item list-group-item-action">
+                    <strong class="mb-1">
+                        <a href="/category/{{id}}">{{name}}</a>
+                    </strong>
+                    <p class="mb-1 muted">{{description}}</p>
+                </li>
+            {{/categories}}
+        </ul>
+    </div>
+    <br/>
+{{/sections}}
+{{/root}}

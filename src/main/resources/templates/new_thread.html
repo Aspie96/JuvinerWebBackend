@@ -1,0 +1,27 @@
+<h1 class="pt-5 pb-2">New thread</h1>
+<form action="/new" method="post" onsubmit="return onNewThreadSubmit(this)">
+    <div class="form-group">
+        <label for="categoryInput">Section</label>
+        {{#root}}
+        <select name="category_id" id="categoryInput">
+            {{#sections}}
+                {{#categories}}
+                    <option value="{{id}}">{{name}}</option>
+                {{/categories}}
+            {{/sections}}
+        </select>
+        {{/root}}
+    </div>
+    <div class="form-group">
+        <label for="titleInput">Title</label>
+        <input name="title" type="text" class="form-control" id="titleInput" />
+    </div>
+    {{#_csrf}}
+        <input type="hidden" name="{{parameterName}}" value="{{token}}" />
+    {{/_csrf}}
+    <div class="form-group">
+        <label for="textInput">Text</label>
+        <textarea name="text" class="form-control" id="textInput" rows="5"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>

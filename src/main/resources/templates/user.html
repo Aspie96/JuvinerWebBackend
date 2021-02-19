@@ -1,0 +1,20 @@
+{{#user}}
+<h1 class="pt-5 pb-2">{{username}}</h1>
+<div class="card">
+    <h2 class="card-header font-weight-normal h6">User details</h2>
+    <dl class="row p-3">
+    <dt class="col-sm-3">Username</dt>
+    <dd class="col-sm-9">{{username}}</dd>
+    {{#avatar}}
+    <dt>Avatar</dt>
+    <dd><img src="/avatars/{{#user}}{{username}}{{/user}}/{{avatar}}" class="img-thumbnail rounded img-fluid" /></dd>
+    {{/avatar}}
+    {{#github}}
+    <dt class="col-sm-3">GitHub</dt>
+    <dd class="col-sm-9">{{github}}</dd>
+    {{/github}}
+    <dt class="col-sm-3"><label for="descriptionInput">Description</label></dt>
+    <dd class="col-sm-9">{{description}}</dd>
+    </dl>
+{{/user}}
+</div>

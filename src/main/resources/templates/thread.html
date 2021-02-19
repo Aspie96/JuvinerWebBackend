@@ -1,0 +1,51 @@
+{{#thread}}
+    <h1 class="pt-5 pb-2">{{title}}</h1>
+    <ul class="px-0">
+        {{#posts}}
+            <li id="post{{id}}" class="media border-bottom border-gray pt-2 align-items-start">
+                <div class="align-self-start mr-3 text-center" style="width:70px;">
+                    {{#user}}
+                        {{#avatar}}
+                        <img src="/avatars/{{#user}}{{username}}{{/user}}/{{avatar}}" class="img-thumbnail rounded img-fluid" />
+                        {{/avatar}}
+                        {{^avatar}}
+                        <img src="/default_avatar" class="img-thumbnail rounded img-fluid" />
+                        {{/avatar}}
+                    <p class="text-center"><a href="/user/{{username}}">{{username}}</a></p>
+                    {{/user}}
+                </div>
+                <div class="media-body pb-1 ml-2 d-flex flex-column align-self-stretch">
+                    <p class="my-0">{{text}}</p>
+                    <p class="small mb-0 mt-auto pr-4 align-bottom muted text-right">Info</p>
+                </div>
+                <div class="btn-group-vertical" data-toggle="buttons">
+                    <button type="button" class="btn btn-secondary">
+                        <svg class="bi bi-reply-fill" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.079 11.9l4.568-3.281a.719.719 0 000-1.238L9.079 4.1A.716.716 0 008 4.719V6c-1.5 0-6 0-7 8 2.5-4.5 7-4 7-4v1.281c0 .56.606.898 1.079.62z"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="btn btn-secondary">
+                        <svg class="bi bi-reply-fill" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.079 11.9l4.568-3.281a.719.719 0 000-1.238L9.079 4.1A.716.716 0 008 4.719V6c-1.5 0-6 0-7 8 2.5-4.5 7-4 7-4v1.281c0 .56.606.898 1.079.62z"/>
+                        </svg>
+                    </button>
+                </div>
+            </li>
+        {{/posts}}
+    </ul>
+{{/thread}}
+{{#session}}
+<h2>Respond</h2>
+{{#thread}}
+    <form action="/thread/{{id}}/posts" method="post" onsubmit="return onNewPostSubmit(this)">
+        <div class="form-group">
+            <label for="text">Text</label>
+            <textarea class="form-control" name="text" row="10"></textarea>
+        </div>
+        {{#_csrf}}
+            <input type="hidden" name="{{parameterName}}" value="{{token}}" />
+        {{/_csrf}}
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+{{/thread}}
+{{/session}}

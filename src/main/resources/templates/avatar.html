@@ -1,0 +1,22 @@
+{{#session}}
+<h1 class="pt-5">{{username}}</h1>
+<p class="pb-2">You can use this page to change your profile picture.</p>
+<div class="card">
+    <h2 class="card-header font-weight-normal h6">Avatar</h2>
+    <form action="/avatar" method="post" enctype="multipart/form-data">
+        <dl class="row p-3">
+        <dt class="col-sm-3">Current avatar</dt>
+        {{#avatar}}
+        <dd class="col-sm-9"><img src="/avatars/{{#session}}{{username}}{{/session}}/{{avatar}}" /></dd>
+        {{/avatar}}
+        {{^avatar}}
+        <dd class="col-sm-9"><i>Not set</i></dd>
+        {{/avatar}}
+        <dt class="col-sm-3">New avatar</dt>
+        <dd class="col-sm-9"><input type="file" class="form-control" name="file" /></dd>
+        <dt class="col-sm-3"></dt>
+        <dd class="col-sm-9"><button type="submit" class="btn btn-primary">Submit</button></dd>
+        </dl>
+    </form>
+{{/session}}
+</div>
