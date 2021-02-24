@@ -26,13 +26,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostController {
     private final PostDao postDao;
     
-    @RabbitListener(queues="thread-created")
+    //@RabbitListener(queues="thread-created")
     public void receive(HashMap<String, Object> message) {
         Post post = new Post((Integer)message.get("thread_id"), (String)message.get("username"), (String)message.get("text"), new Timestamp((Long)message.get("time")));
         this.postDao.save(post);
     }
     
-    @RabbitListener(queues="thread-deleted")
+    //@RabbitListener(queues="thread-deleted")
     public void receive(int threadId) {
         this.postDao.deleteByThreadId(threadId);
     }
