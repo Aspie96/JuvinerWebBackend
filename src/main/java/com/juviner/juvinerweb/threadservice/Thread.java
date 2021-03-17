@@ -1,6 +1,7 @@
 package com.juviner.juvinerweb.threadservice;
 
 import java.io.Serializable;
+import java.sql.Timestamp;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -22,14 +23,30 @@ public class Thread implements Serializable {
     private String username;
     @Column(nullable=false)
     private String text;
+    @Column(nullable=false)
+    private int replies;
+    @Column(nullable=false)
+    private Timestamp updateTime;
 
     public Thread() { }
 
-    public Thread(String title, int categoryId, String username, String text) {
+    public Thread(int id, String title, int categoryId, String username, String text, int replies, Timestamp updateTime) {
+        this.id = id;
         this.title = title;
         this.categoryId = categoryId;
         this.username = username;
         this.text = text;
+        this.replies = replies;
+        this.updateTime = updateTime;
+    }
+    
+    public Thread(String title, int categoryId, String username, String text, Timestamp updateTime) {
+        this.title = title;
+        this.categoryId = categoryId;
+        this.username = username;
+        this.text = text;
+        this.replies = 0;
+        this.updateTime = updateTime;
     }
 
     public int getId() {
@@ -50,5 +67,13 @@ public class Thread implements Serializable {
     
     public String getText() {
         return this.text;
+    }
+    
+    public int getReplies() {
+        return this.replies;
+    }
+    
+    public Timestamp getUpdateTime() {
+        return this.updateTime;
     }
 }

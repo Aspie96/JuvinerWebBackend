@@ -1,10 +1,12 @@
 package com.juviner.juvinerweb.threadservice;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,8 +30,20 @@ public class ThreadController {
 
     @Autowired
     private RabbitTemplate template;
-    private Queue createdQueue;
-    private Queue deletedQueue;
+    private final Queue createdQueue;
+    private final Queue deletedQueue;
+    
+    @RabbitListener(queues="post-created")
+    public void receivePostCreated(HashMap<String, Object> message) {
+        Thread thread = threadDao.findById((int)message.get("thread_id")).get();
+        Thread newThread = new Thread(thread.getId(), thread.getTitle(), thread.getCategoryId(), thread.getUsername(), thread.getText(), thread.getReplies() + 1, new Timestamp((Long)message.get("time")));
+        threadDao.save(newThread);
+    }
+    
+    @RabbitListener(queues="post-deleted")
+    public void receivePostDeleted(HashMap<String, Object> message) {
+        
+    }
     
     public ThreadController(ThreadDao threadDao) {
         this.threadDao = threadDao;
@@ -51,24 +65,20 @@ public class ThreadController {
 
     @PostMapping("/")
     public ResponseEntity postThread(Authentication auth, @RequestBody Map<String, Object> body) {
-        Thread thread = new Thread((String)body.get("title"), (int)body.get("categoryId"), auth.getName(), (String)body.get("text"));
+        long time = System.currentTimeMillis();
+        Thread thread = new Thread((String)body.get("title"), (int)body.get("categoryId"), auth.getName(), (String)body.get("text"), new Timestamp((Long)time));
         thread = this.threadDao.save(thread);
         HashMap<String, Object> message = new HashMap<>();
         message.put("thread_id", thread.getId());
         message.put("username", auth.getName());
         message.put("text", (String)body.get("text"));
-        message.put("time", System.currentTimeMillis());
+        message.put("time", time);
         template.convertAndSend(this.createdQueue.getName(), message);
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.add("Location", "/" + thread.getId());
         return new ResponseEntity<Thread>(thread, headers, HttpStatus.CREATED);
     }
     
-    @PostMapping("/demo")
-    public void d() {
-        
-    }
-
     @DeleteMapping("/{id}")
     public ResponseEntity deleteThread(@RequestHeader String auth, @PathVariable int id) {
         if(auth != null) {
