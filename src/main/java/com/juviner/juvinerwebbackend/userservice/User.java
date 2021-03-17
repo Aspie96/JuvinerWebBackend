@@ -1,5 +1,7 @@
 package com.juviner.juvinerwebbackend.userservice;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,6 +18,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
+@JsonInclude(Include.NON_NULL)
 @Table(name="users")
 public class User implements Serializable, UserDetails {
     @Id
@@ -32,26 +35,29 @@ public class User implements Serializable, UserDetails {
     private String password;
     @Column(nullable=true)
     private String avatar;
+    @Column(nullable=false)
+    private int githubId;
     @Column(nullable=true)
-    private String github;
+    private String githubUsername;
     
     public User() { }
     
-    public User(int id, String username, String description, String email, String password, String avatar, String github) {
+    public User(int id, String username, String description, String email, String password, String avatar, Integer githubId, String githubUsername) {
         this.id = id;
         this.description = description; this.username = username;
         this.email = email;
         this.password = password;
         this.avatar = avatar;
-        this.github = github;
+        this.githubId = githubId;
+        this.githubUsername = githubUsername;
     }
     
-    public User(String username, String description, String email, String password, String avatar, String github) {
+    public User(String username, String description, String email, String password, String avatar, Integer githubId) {
         this.description = description; this.username = username;
         this.email = email;
         this.password = password;
         this.avatar = avatar;
-        this.github = github;
+        this.githubId = githubId;
     }
     
     public int getId() {
@@ -61,6 +67,10 @@ public class User implements Serializable, UserDetails {
     @Override
     public String getUsername() {
         return this.username;
+    }
+    
+    public void hideCredentials() {
+        this.password = null;
     }
     
     public String getDescription() {
@@ -80,8 +90,8 @@ public class User implements Serializable, UserDetails {
         return this.avatar;
     }
     
-    public String getGithub() {
-        return this.github;
+    public int getGithubId() {
+        return this.githubId;
     }
 
     @Override

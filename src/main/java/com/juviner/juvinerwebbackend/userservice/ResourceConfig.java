@@ -22,12 +22,12 @@ import org.springframework.stereotype.Component;
 public class ResourceConfig extends AuthorizationServerConfigurerAdapter {
     @Autowired
     private AuthenticationManager authenticationManager;
-    @Autowired
-    private MyUserDetailsService myUserDetalsService;
+    /*@Autowired
+    private MyUserDetailsService myUserDetalsService;*/
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) {
-        endpoints.authenticationManager(authenticationManager).accessTokenConverter(accessTokenConverter()).userDetailsService(myUserDetalsService);
+        endpoints.authenticationManager(authenticationManager).accessTokenConverter(accessTokenConverter());//.userDetailsService(myUserDetalsService);
     }
     
     @Bean

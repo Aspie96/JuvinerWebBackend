@@ -22,15 +22,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
  
     @Autowired
-    private MyUserDetailsService myUserDetalsService;
+    private CustomAuthenticationProvider authenticationProvider;
     
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+        /*DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
         daoAuthenticationProvider.setUserDetailsService(myUserDetalsService);
-        daoAuthenticationProvider.setPasswordEncoder(new BCryptPasswordEncoder());
-        daoAuthenticationProvider.setHideUserNotFoundExceptions(false);
-        auth.authenticationProvider(daoAuthenticationProvider);
+        //daoAuthenticationProvider.setPasswordEncoder(new BCryptPasswordEncoder());
+        daoAuthenticationProvider.setHideUserNotFoundExceptions(false);*/
+        auth.authenticationProvider(authenticationProvider);
     }
     /*
     @Override

@@ -4,13 +4,18 @@ import com.nimbusds.jose.jwk.JWKSet;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -24,8 +29,16 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.OAuth2Request;
+import org.springframework.security.oauth2.provider.TokenRequest;
+import org.springframework.security.oauth2.provider.code.AuthorizationCodeTokenGranter;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -55,6 +68,7 @@ public class UserControllerA {
 
     @GetMapping("/{username}")
     public User getUser(@PathVariable String username) {
+        System.out.println(username);
         Optional<User> user = this.userDao.findByUsername(username);
         return user.get();
     }
@@ -67,25 +81,6 @@ public class UserControllerA {
         return this.jwkSet.toJSONObject();
     }
     
-    /*@PostMapping("/login")
-    public ResponseEntity login(@RequestParam String username, @RequestParam String password) {
-        Optional<User> user = this.userDao.findByUsername(username);
-        System.out.println(username + password);
-        if(user.isPresent()) {
-            System.out.println(username + password);
-            System.out.print(user.get().getPassword());
-            if(this.encoder.matches(user.get().getPassword(), password)) {
-                return new ResponseEntity(Jwts.builder()
-                    .setSubject(user.get().getUsername())
-                    .setExpiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000))
-                    .signWith(SignatureAlgorithm.HS512, "demoyugijhuijkbkhuyhbvgyuhjihubgvyjihubvgyjiokpdemoyugijhuijkbkhuyhbvgyuhjihubgvyjihubvgyjiokp")
-                    .compact(), HttpStatus.OK);
-            }
-            return new ResponseEntity(HttpStatus.UNAUTHORIZED);
-        }
-        return new ResponseEntity(HttpStatus.UNAUTHORIZED);
-    }*/
-    
     @GetMapping("/self")
     public User getDetails(Authentication auth) {
         User u = this.userDao.findByUsername(auth.getName()).get();
@@ -95,7 +90,7 @@ public class UserControllerA {
     @PutMapping("/self")
     public User postDetails(Authentication auth, @RequestBody Map<String, Object> body) {
         User old = this.userDao.findByUsername(auth.getName()).get();
-        User newU = new User(old.getId(), old.getUsername(), (String)body.get("description"), old.getEmail(), old.getPassword(), old.getAvatar(), old.getGithub());
+        User newU = new User(old.getId(), old.getUsername(), (String)body.get("description"), old.getEmail(), old.getPassword(), old.getAvatar(), null, null);
         User u = this.userDao.save(newU);
         return u;
     }
