@@ -1,8 +1,8 @@
-<h1 class="pt-5 pb-2">Log in</h1>
+<h1 class="pt-5 pb-2">Register</h1>
 <form action="/register" method="post" onsubmit="return onRegister(this)">
     <div class="form-group">
         <label for="usernameInput">Username</label>
-        <input name="username" type="text" class="form-control" id="usernameInput" />
+        <input name="username" type="text" {{#username}}value="{{username}}"{{/username}} class="form-control" id="usernameInput" />
     </div>
     <div class="form-group">
         <label for="passwordInput">Password</label>
@@ -10,7 +10,7 @@
     </div>
     <div class="form-group">
         <label for="emailInput">Email</label>
-        <input name="email" type="email" class="form-control" id="emailInput" />
+        <input name="email" type="email" {{#email}}value="{{email}}"{{/email}} class="form-control" id="emailInput" />
     </div>
     <div class="form-group">
         <label for="emailInput">Description</label>

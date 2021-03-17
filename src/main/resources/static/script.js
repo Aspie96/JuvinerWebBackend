@@ -2,17 +2,23 @@ var templates = {};
 var session;
 
 function parseJwt(token) {
-    var base64Url = token.split(".")[1];
-    var base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    var jsonPayload = decodeURIComponent(atob(base64).split("").map(function(c) {
-        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(""));
-    return JSON.parse(jsonPayload);
+	var base64Url = token.split(".")[1];
+	var base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+	var jsonPayload = decodeURIComponent(atob(base64).split("").map(function(c) {
+		return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+	}).join(""));
+	return JSON.parse(jsonPayload);
 };
 
 var auth;
 if(auth = sessionStorage.getItem("auth")) {
 	session = JSON.parse(auth);
+}
+var page;
+if(location.pathname != "/login") {
+	page = location.pathname + location.search;
+} else {
+	page = "/";
 }
 
 function refreshToken(callback) {
@@ -40,27 +46,25 @@ function call(api, callback, method, body, contentType) {
 		method: method,
 		headers: headers,
 		body: body
-	})
-		.then(function(response) {
-			if(response.status == 401 && session.authToken) {
-				refreshToken(function() {
-					call(api, callback, method, body, contentType);
-				});
-			} else {
-				var error;
-				var data;
-				if(!response.ok) {
-					error = new Error("Response status is " + response.status);
-					data = response;
-				}
-				response.json().then(function(data) {
-					callback(data, error);
-				});
+	}).then(function(response) {
+		if(response.status == 401 && session.authToken) {
+			refreshToken(function() {
+				call(api, callback, method, body, contentType);
+			});
+		} else {
+			var error;
+			var data;
+			if(!response.ok) {
+				error = new Error("Response status is " + response.status);
+				data = response;
 			}
-		})
-		.catch(function(error) {
-			callback(null, error);
-		});
+			response.json().then(function(data) {
+				callback(data, error);
+			});
+		}
+	}).catch(function(error) {
+		callback(null, error);
+	});
 }
 
 function encodeData(data) {
@@ -76,10 +80,14 @@ function encodeData(data) {
 
 function updateMenu(callback) {
 	getTemplate("menu", function(template) {
-		document.querySelector("#menu").innerHTML = Mustache.render(template, {
-			username: session.username
-		});
-		callback();
+		data = {};
+		if(session){
+			data.username = session.username;
+		}
+		document.querySelector("#menu").innerHTML = Mustache.render(template, data);
+		if(callback) {
+			callback();
+		}
 	});
 }
 
@@ -113,10 +121,14 @@ GoldenRoute.addRoute("/thread/:id", function(params, query, callback) {
 	call("/api/threads/" + params.id, function(thread, error) {
 		call("/api/posts/thread/" + params.id, function(posts, error) {
 			getTemplate("thread", function(template) {
-				main.innerHTML = Mustache.render(template, {
+				var d = {
 					thread: thread,
 					posts: posts
-				});
+				};
+				if(session) {
+					d.session = session.username;
+				}
+				main.innerHTML = Mustache.render(template, d);
 				callback("titolo");
 			});
 		});
@@ -169,19 +181,70 @@ GoldenRoute.addRoute("/new", function(params, query, callback) {
 	});
 });
 
-document.addEventListener("load", function() {
+GoldenRoute.addRoute("/register", function(params, query, callback) {
+	getTemplate("register", function(template) {
+		main.innerHTML = Mustache.render(template, { error: "error" in query });
+		callback("titolo");
+	});
+});
+
+window.addEventListener("storage",function(event) {
+	if(event.key == "session") {
+		session = JSON.parse(event.newValue);
+		updateMenu();
+	} else if(event.key == "getSession" && session) {
+		localStorage.setItem("session", JSON.stringify(session));
+	}
+});
+
+window.addEventListener("load", function() {
 	GoldenRoute.start();
+	main = document.querySelector("main");
+	if(session) {
+		updateMenu();
+	}
+	if(location.pathname == "/login/github") {
+		var code = new URLSearchParams(location.search).get("code");
+		call("/api/users/oauth/token", function(data, error) {
+			if(!error) {
+				session = {
+					authToken: data.access_token,
+					refreshToken: data.refresh_token,
+					username: JSON.parse(atob(data.access_token.split('.')[1])).user_name
+				};
+				updateMenu(function() {
+					GoldenRoute.routeTo("/");
+				});
+				sessionStorage.setItem("auth", JSON.stringify(session));
+				localStorage.setItem("session", JSON.stringify(session));
+			} else {
+				getTemplate("login", function(template) {
+					main.innerHTML = Mustache.render(template, { error: true });
+					callback("titolo");
+				});
+			}
+		}, "POST", encodeData({
+			client_id: "CLIENT_ID",
+			client_secret: "CLIENT_SECRET",
+			grant_type: "password",
+			username: "github:" + code,
+			password: ""
+		}), "application/x-www-form-urlencoded");
+	}
+	localStorage.setItem("getSession", "");
+	localStorage.removeItem("getSession", "");
 });
 
 function onNewPostSubmit(form) {
-	var thread_id = parseInt(form.attr("action").split("/")[2]);
+	var thread_id = parseInt(form.getAttribute("action").split("/")[2]);
 	var text = form.text.value;
-	call("/api/posts/thread" + thread_id, function(data, error) {
+	call("/api/posts/thread/" + thread_id, function(data, error) {
 		GoldenRoute.routeTo("/thread/" + thread_id);
 	}, "POST", {
 		thread_id: parseInt(thread_id),
 		text: text
 	});
+	return false;
 }
 
 function onNewThreadSubmit(form) {
@@ -209,9 +272,10 @@ function onLogin(form) {
 				username: username
 			};
 			updateMenu(function() {
-				GoldenRoute.routeTo("/");
+				GoldenRoute.routeTo(page);
 			});
 			sessionStorage.setItem("auth", JSON.stringify(session));
+			localStorage.setItem("session", JSON.stringify(session));
 		} else {
 			getTemplate("login", function(template) {
 				main.innerHTML = Mustache.render(template, { error: true });
@@ -225,6 +289,52 @@ function onLogin(form) {
 		username: username,
 		password: password
 	}), "application/x-www-form-urlencoded");
+	return false;
+}
+
+function preservePage() {
+	if(location.pathname != "/login") {
+		page = location.pathname + location.search;
+	}
+	return true;
+}
+
+function onLogout() {
+	session = null;
+	sessionStorage.removeItem("auth");
+	updateMenu(function() {});
+	return false;
+}
+
+function onRegister(form) {
+	var username = form.username.value;
+	var password = form.password.value;
+	var email = form.email.value;
+	var description = form.description.value;
+	call("/api/users/register", function(data, error) {
+		/*if(!error) {
+			session = {
+				authToken: data.access_token,
+				refreshToken: data.refresh_token,
+				username: username
+			};
+			updateMenu(function() {
+				GoldenRoute.routeTo("/");
+			});
+			sessionStorage.setItem("auth", JSON.stringify(session));
+			localStorage.setItem("session", JSON.stringify(session));
+		} else {
+			getTemplate("login", function(template) {
+				main.innerHTML = Mustache.render(template, { error: true });
+				callback("titolo");
+			});
+		}*/
+	}, "POST", {
+		username: username,
+		email: email,
+		password: password,
+		description: description
+	});
 	return false;
 }
 

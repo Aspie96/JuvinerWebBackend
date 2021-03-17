@@ -1,6 +1,7 @@
 {{#category}}
 <h1 class="pt-5">{{name}}</h1>
 <p class="pb-2">{{description}}</p>
+{{/category}}
 <ul class="px-0">
     {{#threads}}
         <li class="media border-bottom border-gray pt-2">
@@ -10,17 +11,10 @@
             <div class="media-body pb-3 mb-0 ml-2">
                 <p class="my-0 strong">
                     <a href="/thread/{{id}}">{{title}}</a>
-                    {{#firstPost}}
-                       {{#user}}
-                        <small class="text-muted"> by <strong><a href="/user/{{username}}">@{{username}}</a></strong></small>
-                        {{/user}}
-                    {{/firstPost}}
+                    <small class="text-muted"> by <strong><a href="/user/{{username}}">@{{username}}</a></strong> ({{replies}} replies)</small>
                 </p>
-                {{#firstPost}}
                 <p class="my-0 small text-muted">{{text}}</p>
-                {{/firstPost}}
             </div>
         </li>
     {{/threads}}
 </ul>
-{{/category}}

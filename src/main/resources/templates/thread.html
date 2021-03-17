@@ -4,15 +4,8 @@
         {{#posts}}
             <li id="post{{id}}" class="media border-bottom border-gray pt-2 align-items-start">
                 <div class="align-self-start mr-3 text-center" style="width:70px;">
-                    {{#user}}
-                        {{#avatar}}
-                        <img src="/avatars/{{#user}}{{username}}{{/user}}/{{avatar}}" class="img-thumbnail rounded img-fluid" />
-                        {{/avatar}}
-                        {{^avatar}}
-                        <img src="/default_avatar" class="img-thumbnail rounded img-fluid" />
-                        {{/avatar}}
+                    <img src="/api/users/{{username}}/avatar" class="img-thumbnail rounded img-fluid" />
                     <p class="text-center"><a href="/user/{{username}}">{{username}}</a></p>
-                    {{/user}}
                 </div>
                 <div class="media-body pb-1 ml-2 d-flex flex-column align-self-stretch">
                     <p class="my-0">{{text}}</p>
