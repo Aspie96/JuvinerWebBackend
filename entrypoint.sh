@@ -14,5 +14,5 @@ then
             sleep 15
         fi
     done
-    java -Xmx300m -Xss512k -XX:+UseContainerSupport -jar /app.jar
 fi
+java -Xmx300m -Xss512k -XX:+UseContainerSupport -jar /app.jar
