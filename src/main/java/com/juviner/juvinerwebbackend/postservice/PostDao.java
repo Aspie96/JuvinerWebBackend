@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.data.repository.CrudRepository;
 
 public interface PostDao extends CrudRepository<Post, Integer> {
-    List<Post> findByThreadId(int threadId);
+    public List<Post> findByThreadId(int threadId);
     public void deleteByThreadId(int threadId);
+    public boolean existsByThreadId(int threadId);
 }

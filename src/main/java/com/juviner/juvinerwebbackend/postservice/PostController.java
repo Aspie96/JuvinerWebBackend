@@ -4,8 +4,11 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,9 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,19 +27,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostController {
     private final PostDao postDao;
     
-    //@RabbitListener(queues="thread-created")
+    @Autowired
+    private RabbitTemplate template;
+    private final Queue createdQueue;
+    private final Queue deletedQueue;
+    
+    @RabbitListener(queues="thread-created")
     public void receive(HashMap<String, Object> message) {
         Post post = new Post((Integer)message.get("thread_id"), (String)message.get("username"), (String)message.get("text"), new Timestamp((Long)message.get("time")));
         this.postDao.save(post);
     }
     
-    //@RabbitListener(queues="thread-deleted")
+    @RabbitListener(queues="thread-deleted")
     public void receive(int threadId) {
         this.postDao.deleteByThreadId(threadId);
     }
     
     public PostController(PostDao postDao) {
         this.postDao = postDao;
+        this.createdQueue = new Queue("post-created");
+        this.deletedQueue = new Queue("post-deleted");
     }
     
     @GetMapping("/thread/{threadId}")
@@ -49,8 +57,17 @@ public class PostController {
     
     @PostMapping("/thread/{threadId}")
     public ResponseEntity post(Authentication auth, @PathVariable int threadId, @RequestBody Map<String, Object> body) {
-        Post post = new Post(threadId, auth.getName(), (String)body.get("text"), new Timestamp((Long)System.currentTimeMillis()));
-        this.postDao.save(post);
-        return new ResponseEntity<>(post, HttpStatus.CREATED);
+        if(this.postDao.existsByThreadId(threadId)) {
+            long time = System.currentTimeMillis();
+            Post post = new Post(threadId, auth.getName(), (String)body.get("text"), new Timestamp((Long)time));
+            this.postDao.save(post);
+            HashMap<String, Object> message = new HashMap<>();
+            message.put("thread_id", threadId);
+            message.put("time", time);
+            template.convertAndSend(this.createdQueue.getName(), message);
+            return new ResponseEntity<>(post, HttpStatus.CREATED);
+        } else {
+            return new ResponseEntity(HttpStatus.NOT_FOUND);
+        }
     }
 }
