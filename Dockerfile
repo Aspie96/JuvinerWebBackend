@@ -9,4 +9,5 @@ FROM openjdk:8-jdk-alpine
 RUN apk add jq
 COPY --from=0 /app/target/*.jar app.jar
 COPY entrypoint.sh entrypoint.sh
+RUN chmod a+x entrypoint.sh
 ENTRYPOINT ./entrypoint.sh
