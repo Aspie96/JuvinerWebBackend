@@ -121,6 +121,13 @@ GoldenRoute.addRoute("/thread/:id", function(params, query, callback) {
 	call("/api/threads/" + params.id, function(thread, error) {
 		call("/api/posts/thread/" + params.id, function(posts, error) {
 			getTemplate("thread", function(template) {
+				if(session) {
+					for(var i in posts) {
+						if(session.username == posts[i].username) {
+							posts[i].mine = true;
+						}
+					}
+				}
 				var d = {
 					thread: thread,
 					posts: posts
@@ -175,9 +182,11 @@ GoldenRoute.addRoute("/login", function(params, query, callback) {
 });
 
 GoldenRoute.addRoute("/new", function(params, query, callback) {
-	getTemplate("new_thread", function(template) {
-		main.innerHTML = Mustache.render(template, {});
-		callback("titolo");
+	call("/api/sections/", function(data, error) {
+		getTemplate("new_thread", function(template) {
+			main.innerHTML = Mustache.render(template, { sections: data });
+			callback("titolo");
+		});
 	});
 });
 
@@ -290,6 +299,32 @@ function onLogin(form) {
 		password: password
 	}), "application/x-www-form-urlencoded");
 	return false;
+}
+
+function onPostDelete(button) {
+	var first = document.querySelectorAll(".delete-button")[0];
+	if(button == first) {
+		$("#deleteThreadModal").modal();
+	} else {
+		window.deleteId = parseInt(button.getAttribute("data-id"));
+		$("#deletePostModal").modal();
+	}
+}
+
+function onDeletePostSubmit(button) {
+	$("#deletePostModal").modal("hide");
+	var thread_id = parseInt(window.location.pathname.split("/")[2]);
+	call("/api/posts/" + deleteId, function(data, error) {
+		GoldenRoute.routeTo("/thread/" + thread_id);
+	}, "DELETE");
+}
+
+function onDeleteThreadSubmit(button) {
+	$("#deleteThreadModal").modal("hide");
+	var thread_id = parseInt(window.location.pathname.split("/")[2]);
+	call("/api/threads/" + thread_id, function(data, error) {
+		GoldenRoute.routeTo("/");
+	}, "DELETE");
 }
 
 function preservePage() {
