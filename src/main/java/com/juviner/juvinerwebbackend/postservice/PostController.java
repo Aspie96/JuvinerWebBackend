@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -15,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -66,6 +68,30 @@ public class PostController {
             message.put("time", time);
             template.convertAndSend(this.createdQueue.getName(), message);
             return new ResponseEntity<>(post, HttpStatus.CREATED);
+        } else {
+            return new ResponseEntity(HttpStatus.NOT_FOUND);
+        }
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity delete(Authentication auth, @PathVariable int id) {
+        Optional<Post> post = this.postDao.findById(id);
+        if(post.isPresent()) {
+            if(auth.getName().equals(post.get().getUsername())) {
+                if(this.postDao.findFirstByThreadId(post.get().getThreadId()).get().getId() == post.get().getId()) {
+                    return new ResponseEntity(HttpStatus.BAD_REQUEST);
+                } else {
+                    this.postDao.delete(post.get());
+                    HashMap<String, Object> message = new HashMap<>();
+                    message.put("thread_id", post.get().getThreadId());
+                    message.put("time", (long)this.postDao.findFirstByThreadId(post.get().getThreadId()).get().getTime().getTime());
+                    template.convertAndSend(this.deletedQueue.getName(), message);
+                    System.out.println("Del post");
+                    return new ResponseEntity(HttpStatus.OK);
+                }
+            } else {
+                return new ResponseEntity(HttpStatus.FORBIDDEN);
+            }
         } else {
             return new ResponseEntity(HttpStatus.NOT_FOUND);
         }
