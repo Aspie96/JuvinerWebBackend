@@ -42,7 +42,10 @@ public class ThreadController {
     
     @RabbitListener(queues="post-deleted")
     public void receivePostDeleted(HashMap<String, Object> message) {
-        
+        System.out.println("Del post");
+        Thread thread = threadDao.findById((int)message.get("thread_id")).get();
+        Thread newThread = new Thread(thread.getId(), thread.getTitle(), thread.getCategoryId(), thread.getUsername(), thread.getText(), thread.getReplies() - 1, new Timestamp((Long)message.get("time")));
+        threadDao.save(newThread);
     }
     
     public ThreadController(ThreadDao threadDao) {
@@ -66,7 +69,7 @@ public class ThreadController {
     @PostMapping("/")
     public ResponseEntity postThread(Authentication auth, @RequestBody Map<String, Object> body) {
         long time = System.currentTimeMillis();
-        Thread thread = new Thread((String)body.get("title"), (int)body.get("categoryId"), auth.getName(), (String)body.get("text"), new Timestamp((Long)time));
+        Thread thread = new Thread((String)body.get("title"), (int)body.get("category_id"), auth.getName(), (String)body.get("text"), new Timestamp((Long)time));
         thread = this.threadDao.save(thread);
         HashMap<String, Object> message = new HashMap<>();
         message.put("thread_id", thread.getId());
@@ -80,22 +83,18 @@ public class ThreadController {
     }
     
     @DeleteMapping("/{id}")
-    public ResponseEntity deleteThread(@RequestHeader String auth, @PathVariable int id) {
-        if(auth != null) {
-            Optional<Thread> thread = this.threadDao.findById(id);
-            if(thread.isPresent()) {
-                if(thread.get().getUsername().equals(auth)) {
-                    this.threadDao.deleteById(id);
-                    template.convertAndSend(this.deletedQueue.getName(), id);
-                    return new ResponseEntity(HttpStatus.OK);
-                } else {
-                    return new ResponseEntity(HttpStatus.UNAUTHORIZED);
-                }
+    public ResponseEntity deleteThread(Authentication auth, @PathVariable int id) {
+        Optional<Thread> thread = this.threadDao.findById(id);
+        if(thread.isPresent()) {
+            if(thread.get().getUsername().equals(auth.getName())) {
+                this.threadDao.deleteById(id);
+                template.convertAndSend(this.deletedQueue.getName(), id);
+                return new ResponseEntity(HttpStatus.OK);
             } else {
-                return new ResponseEntity(HttpStatus.NOT_FOUND);
+                return new ResponseEntity(HttpStatus.UNAUTHORIZED);
             }
         } else {
-            return new ResponseEntity(HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity(HttpStatus.NOT_FOUND);
         }
     }
 }
