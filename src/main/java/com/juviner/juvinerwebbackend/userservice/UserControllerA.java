@@ -1,5 +1,8 @@
 package com.juviner.juvinerwebbackend.userservice;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.juviner.juvinerwebbackend.userservice.google.GoogleAuthenticationToken;
+import com.juviner.juvinerwebbackend.userservice.google.GoogleTokenVerifierService;
 import com.nimbusds.jose.jwk.JWKSet;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -30,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -41,6 +45,7 @@ import org.springframework.security.oauth2.provider.code.AuthorizationCodeTokenG
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -49,6 +54,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.ServerResponse;
 import reactor.core.publisher.Flux;
@@ -63,6 +69,9 @@ public class UserControllerA {
     
     @Autowired
     private DefaultTokenServices defaultTokenServices;
+    
+    @Autowired
+    private GoogleTokenVerifierService googleIdTokenVerifierService;
 
     public UserControllerA(UserDao userDao) {
         this.userDao = userDao;
@@ -91,17 +100,88 @@ public class UserControllerA {
     }
     
     @PutMapping("/self")
-    public User postDetails(Authentication auth, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<User> postDetails(Authentication auth, @RequestBody Map<String, Object> body) {
         User old = this.userDao.findByUsername(auth.getName()).get();
-        User newU = new User(old.getId(), old.getUsername(), (String)body.get("description"), old.getEmail(), old.getPassword(), old.getAvatar(), 0, null, null);
+        String description;
+        String googleSub;
+        int githubId;
+        String githubUsername;
+        if(body.containsKey("description")) {
+            description = (String)body.get("description");
+        } else {
+            description = old.getDescription();
+        }
+        if(body.containsKey("googleId")) {
+            String token = (String)body.get("googleId");
+            if(token.equals("r")) {
+                googleSub = null;
+            } else {
+                GoogleIdToken googleIdToken = googleIdTokenVerifierService.verify(token);
+                GoogleIdToken.Payload payload = googleIdToken.getPayload();
+                googleSub = (String)payload.get("sub");
+                Optional<User> u2 = this.userDao.findByGoogleSub(googleSub);
+                if(u2.isPresent() && u2.get().getId() != old.getId()) {
+                    return new ResponseEntity(HttpStatus.BAD_REQUEST);
+                }
+            }
+        } else {
+            googleSub = old.getGoogleSub();
+        }
+        if(body.containsKey("githubToken")) {
+            String code = (String)body.get("githubToken");
+            if(code.equals("r")) {
+                githubId = 0;
+                githubUsername = null;
+            } else {
+                LinkedMultiValueMap<String, String> b = new  LinkedMultiValueMap<>();
+                b.add("code", code);
+                b.add("client_id", "Iv1.f1dd9ba30d3451a9");
+                b.add("client_secret", "7f570071306e3d068c9378f6364dae9e8036ef0e");
+                Map res = WebClient.create("https://github.com/login/oauth/access_token")
+                    .post()
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromFormData(b)).retrieve().bodyToMono(Map.class).block();
+                String token = (String)res.get("access_token");
+                System.out.println(token);
+                Map data = WebClient.create("https://api.github.com/user")
+                    .get()
+                    .accept(MediaType.APPLICATION_JSON)
+                    .headers(headers -> headers.setBearerAuth(token))
+                    .retrieve().bodyToMono(Map.class).block();
+                githubId = (int)data.get("id");
+                githubUsername = (String)data.get("login");
+                Optional<User> u2 = userDao.findByGithubId(githubId);
+                if(u2.isPresent() && u2.get().getId() != old.getId()){
+                    return new ResponseEntity(HttpStatus.BAD_REQUEST);
+                }
+            }
+        } else {
+            githubId = old.getGithubId();
+            githubUsername = old.getGithubUsername();
+        }
+        User newU = new User(old.getId(), old.getUsername(), description, old.getEmail(), old.getPassword(), githubId, githubUsername, googleSub);
         User u = this.userDao.save(newU);
-        return u;
+        return new ResponseEntity(u, HttpStatus.OK);
     }
    
     @PostMapping("/register")
-    public User register(@RequestBody Map<String, Object> body) {
-        User user = new User((String)body.get("username"), (String)body.get("description"), (String)body.get("email"), passwordEncoder.encode((String)body.get("password")), null, 0, null);
-        return this.userDao.save(user);
+    public ResponseEntity<User> register(@RequestBody Map<String, Object> body) {
+        String googleSub = null;
+        if(body.containsKey("googleId")) {
+            String token = (String)body.get("googleId");
+            
+            GoogleIdToken googleIdToken = googleIdTokenVerifierService.verify(token);
+            GoogleIdToken.Payload payload = googleIdToken.getPayload();
+            googleSub = (String)payload.get("sub");
+            if(this.userDao.findByGoogleSub(googleSub).isPresent()) {
+                return new ResponseEntity(HttpStatus.BAD_REQUEST);
+            }
+        }
+        if(this.userDao.findByUsername((String)body.get("username")).isPresent()) {
+            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+        }
+        User user = new User((String)body.get("username"), (String)body.get("description"), (String)body.get("email"), passwordEncoder.encode((String)body.get("password")), null, 0, null, googleSub);
+        return new ResponseEntity(this.userDao.save(user), HttpStatus.OK);
     }
     
     private OAuth2AccessToken loginThirdParty(Authentication authentication) {
