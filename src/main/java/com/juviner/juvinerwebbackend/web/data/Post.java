@@ -2,6 +2,7 @@ package com.juviner.juvinerwebbackend.web.data;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 
 public class Post implements Serializable {
     private int id;
@@ -37,5 +38,9 @@ public class Post implements Serializable {
     
     public int getThreadId() {
         return this.threadId;
+    }
+    
+    public String getStringTime() {
+        return new SimpleDateFormat("dd/MM/yyyy hh:mm").format(this.getTime());
     }
 }

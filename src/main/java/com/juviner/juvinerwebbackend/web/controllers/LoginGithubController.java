@@ -14,8 +14,8 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Controller
-@RequestMapping("/login")
-class LoginController {
+@RequestMapping("/login/github")
+class LoginGithubController {
     @Autowired
     private WebClients clients;
     
@@ -49,6 +49,6 @@ class LoginController {
     
     @GetMapping
     public String github(Model model) {
-        return "login_page";
+        return "login_pending_page";
     }
 }

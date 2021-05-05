@@ -3,19 +3,17 @@
 <p class="pb-2">You can use this page to change details about your account.</p>
 <div class="card">
     <h2 class="card-header font-weight-normal h6">User details</h2>
-    <form action="/user" method="post" onsubmit="return onUserDetailsSubmit(this)">
-        <dl class="row p-3">
-        <dt class="col-sm-3">Username</dt>
-        <dd class="col-sm-9">{{username}}</dd>
-        <dt class="col-sm-3">Email</dt>
-        <dd class="col-sm-9">{{email}}</dd>
-        <dt class="col-sm-3"><label for="descriptionInput">Description</label></dt>
-        <dd class="col-sm-9"><textarea name="description" class="form-control" id="descriptionInput" rows="5">{{description}}</textarea></dd>
-        <dt class="col-sm-3">Github</dt>
-        <dd class="col-sm-9">{{#github}}{{github}}{{/github}}{{^github}}<a href="https://github.com/login/oauth/authorize?client_id=Iv1.f1dd9ba30d3451a9">Set GitHub</a>{{/github}}</dd>
-        <dt class="col-sm-3"></dt>
-        <dd class="col-sm-9"><button type="submit" class="btn btn-primary">Submit</button></dd>
-        </dl>
-    </form>
+    <dl class="row p-3">
+    <dt class="col-sm-3">Username</dt>
+    <dd class="col-sm-9">{{username}}</dd>
+    <dt class="col-sm-3">Email</dt>
+    <dd class="col-sm-9">{{email}}</dd>
+    <dt class="col-sm-3"><label for="descriptionInput">Description</label></dt>
+    <dd class="col-sm-9"><form action="/user" method="post" onsubmit="return onUserDetailsSubmit(this)"><textarea name="description" class="form-control" id="descriptionInput" rows="5">{{description}}</textarea><button type="submit" class="btn btn-primary">Submit</button></form></dd>
+    <dt class="col-sm-3">Github</dt>
+    <dd class="col-sm-9">{{#githubUsername}}{{githubUsername}} <button type="button" class="btn btn-sm btn-primary" onclick="onGithubDisconnect()">Disconnect</button>{{/githubUsername}}{{^githubUsername}}<a href="https://github.com/login/oauth/authorize?client_id=Iv1.f1dd9ba30d3451a9">Set GitHub</a>{{/githubUsername}}</dd>
+    <dt class="col-sm-3">Google</dt>
+    <dd class="col-sm-9">{{#googleSub}}Google account connected. <button type="button" class="btn btn-sm btn-primary" onclick="onGoogleDisconnect()">Disconnect</button>{{/googleSub}}{{^googleSub}}<div class="g-signin2" id="googleLogin" data-onsuccess="onGoogleConnect"></div>{{/googleSub}}</dd>
+    </dl>
 {{/user}}
 </div>

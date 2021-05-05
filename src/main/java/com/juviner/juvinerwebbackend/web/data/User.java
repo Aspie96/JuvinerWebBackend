@@ -10,27 +10,24 @@ public class User implements Serializable {
     private String username;
     private String description;
     private String email;
-    private String password;
-    private String avatar;
-    private String github;
+    private int githubId;
+    private String githubUsername;
     
     public User() { }
     
-    public User(int id, String username, String description, String email, String password, String avatar, String github) {
+    public User(int id, String username, String description, String email, String avatar, int githubId, String githubUsername) {
         this.id = id;
         this.description = description; this.username = username;
         this.email = email;
-        this.password = password;
-        this.avatar = avatar;
-        this.github = github;
+        this.githubId = githubId;
+        this.githubUsername = githubUsername;
     }
     
-    public User(String username, String description, String email, String password, String avatar, String github) {
+    public User(String username, String description, String email, String avatar, int githubId, String githubUsername) {
         this.description = description; this.username = username;
         this.email = email;
-        this.password = password;
-        this.avatar = avatar;
-        this.github = github;
+        this.githubId = githubId;
+        this.githubUsername = githubUsername;
     }
     
     public int getId() {
@@ -49,15 +46,11 @@ public class User implements Serializable {
         return this.email;
     }
     
-    public String getPassword() {
-        return this.password;
+    public int getGithubId() {
+        return this.githubId;
     }
     
-    public String getAvatar() {
-        return this.avatar;
-    }
-    
-    public String getGithub() {
-        return this.github;
+    public String getGithubUsername() {
+        return this.githubUsername;
     }
 }
