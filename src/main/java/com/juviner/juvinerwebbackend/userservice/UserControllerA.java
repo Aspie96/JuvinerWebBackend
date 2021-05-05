@@ -60,6 +60,9 @@ import reactor.netty.http.client.HttpClient;
 public class UserControllerA {
     private final UserDao userDao;
     private final BCryptPasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private DefaultTokenServices defaultTokenServices;
 
     public UserControllerA(UserDao userDao) {
         this.userDao = userDao;
@@ -90,15 +93,46 @@ public class UserControllerA {
     @PutMapping("/self")
     public User postDetails(Authentication auth, @RequestBody Map<String, Object> body) {
         User old = this.userDao.findByUsername(auth.getName()).get();
-        User newU = new User(old.getId(), old.getUsername(), (String)body.get("description"), old.getEmail(), old.getPassword(), old.getAvatar(), null, null);
+        User newU = new User(old.getId(), old.getUsername(), (String)body.get("description"), old.getEmail(), old.getPassword(), old.getAvatar(), 0, null, null);
         User u = this.userDao.save(newU);
         return u;
     }
    
     @PostMapping("/register")
     public User register(@RequestBody Map<String, Object> body) {
-        User user = new User((String)body.get("username"), (String)body.get("description"), (String)body.get("email"), passwordEncoder.encode((String)body.get("password")), null, null);
+        User user = new User((String)body.get("username"), (String)body.get("description"), (String)body.get("email"), passwordEncoder.encode((String)body.get("password")), null, 0, null);
         return this.userDao.save(user);
+    }
+    
+    private OAuth2AccessToken loginThirdParty(Authentication authentication) {
+        System.out.println("A");
+        OAuth2Request oAuth2Request = new OAuth2Request(
+            Collections.EMPTY_MAP,
+            "CLIENT_ID",
+            authentication.getAuthorities(),
+            true,
+            new HashSet<String>() {{
+                add("all");
+            }},
+            Collections.EMPTY_SET,
+            "",
+            Collections.EMPTY_SET,
+            Collections.EMPTY_MAP
+        );
+        OAuth2Authentication oAuth2Authentication = new OAuth2Authentication(oAuth2Request, authentication);
+        OAuth2AccessToken token = defaultTokenServices.createAccessToken(oAuth2Authentication);
+        System.out.println("token: " + token);
+        return token;
+    }
+    
+    @PostMapping("/login/google")
+    public OAuth2AccessToken signInWithGoogle(Authentication authentication) {
+        return loginThirdParty(authentication);
+    }
+    
+    @PostMapping("/login/github")
+    public OAuth2AccessToken signInWithGithub(Authentication authentication) {
+        return loginThirdParty(authentication);
     }
     
     @GetMapping(value="/default_avatar")

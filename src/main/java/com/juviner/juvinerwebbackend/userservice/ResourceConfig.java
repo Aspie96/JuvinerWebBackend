@@ -14,7 +14,10 @@ import org.springframework.security.oauth2.config.annotation.configurers.ClientD
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
 import org.springframework.stereotype.Component;
 
@@ -22,19 +25,30 @@ import org.springframework.stereotype.Component;
 public class ResourceConfig extends AuthorizationServerConfigurerAdapter {
     @Autowired
     private AuthenticationManager authenticationManager;
-    /*@Autowired
-    private MyUserDetailsService myUserDetalsService;*/
-
+    
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) {
         endpoints.authenticationManager(authenticationManager).accessTokenConverter(accessTokenConverter());//.userDetailsService(myUserDetalsService);
+    }
+
+    @Bean
+    public TokenStore tokenStore() {
+        return new JwtTokenStore(accessTokenConverter());
+    }
+    
+    @Bean
+    public DefaultTokenServices tokenServices() {
+        DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
+        defaultTokenServices.setTokenStore(tokenStore());
+        defaultTokenServices.setTokenEnhancer(accessTokenConverter());
+        defaultTokenServices.setSupportRefreshToken(true);
+        return defaultTokenServices;
     }
     
     @Bean
     public JwtAccessTokenConverter accessTokenConverter() {
         JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
-        KeyStoreKeyFactory keyStoreKeyFactory = 
-          new KeyStoreKeyFactory(new ClassPathResource("mytest.jks"), "mypass".toCharArray());
+        KeyStoreKeyFactory keyStoreKeyFactory = new KeyStoreKeyFactory(new ClassPathResource("mytest.jks"), "mypass".toCharArray());
         converter.setKeyPair(keyStoreKeyFactory.getKeyPair("mytest"));
         return converter;
     }
@@ -63,11 +77,11 @@ public class ResourceConfig extends AuthorizationServerConfigurerAdapter {
     }
 
     @Override
-        public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-            clients.inMemory()
-                .withClient("CLIENT_ID").secret("{noop}CLIENT_SECRET")
-                .authorizedGrantTypes("password", "refresh_token")
-                .authorities("ROLE_CLIENT")
-                .scopes("all");
+    public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+        clients.inMemory()
+            .withClient("CLIENT_ID").secret("{noop}CLIENT_SECRET")
+            .authorizedGrantTypes("password", "refresh_token")
+            .authorities("ROLE_CLIENT")
+            .scopes("all");
     }
 }

@@ -39,10 +39,12 @@ public class User implements Serializable, UserDetails {
     private int githubId;
     @Column(nullable=true)
     private String githubUsername;
+    @Column(name="google_sub", nullable=true)
+    private String googleSub;
     
     public User() { }
     
-    public User(int id, String username, String description, String email, String password, String avatar, Integer githubId, String githubUsername) {
+    public User(int id, String username, String description, String email, String password, String avatar, int githubId, String githubUsername, String googleSub) {
         this.id = id;
         this.description = description; this.username = username;
         this.email = email;
@@ -50,14 +52,16 @@ public class User implements Serializable, UserDetails {
         this.avatar = avatar;
         this.githubId = githubId;
         this.githubUsername = githubUsername;
+        this.googleSub = googleSub;
     }
     
-    public User(String username, String description, String email, String password, String avatar, Integer githubId) {
+    public User(String username, String description, String email, String password, String avatar, int githubId, String githubUsername) {
         this.description = description; this.username = username;
         this.email = email;
         this.password = password;
         this.avatar = avatar;
         this.githubId = githubId;
+        this.githubUsername = githubUsername;
     }
     
     public int getId() {
@@ -93,6 +97,10 @@ public class User implements Serializable, UserDetails {
     public int getGithubId() {
         return this.githubId;
     }
+    
+    public String getGithubUsername() {
+        return this.githubUsername;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -119,5 +127,9 @@ public class User implements Serializable, UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+    
+    public String getUserSub() {
+        return this.googleSub;
     }
 }

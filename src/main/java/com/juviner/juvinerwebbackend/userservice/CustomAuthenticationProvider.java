@@ -5,6 +5,8 @@
  */
 package com.juviner.juvinerwebbackend.userservice;
 
+import com.juviner.juvinerwebbackend.userservice.google.GoogleTokenVerifierService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,8 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
     @Autowired
     private UserDao userDao;
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    @Autowired
+    private GoogleTokenVerifierService googleIdTokenVerifierService;
     
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -62,6 +66,23 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
                 return new UsernamePasswordAuthenticationToken(user.get().getUsername(), "", user.get().getAuthorities());
             } else {
                 throw new UsernameNotFoundException(username);
+            }
+        } else if(username.startsWith("google:")) {
+            String token = username.substring("google:".length());
+            
+            System.out.println("Credentials: " + token);
+            GoogleIdToken googleIdToken = googleIdTokenVerifierService.verify(token);
+            GoogleIdToken.Payload payload = googleIdToken.getPayload();
+
+            String sub = (String)payload.get("sub");
+            System.out.println("Sub: " + sub);
+
+            Optional<User> user = userDao.findByGoogleSub(sub);
+            System.out.println("User: " + user.isPresent());
+            if(user.isPresent()) {
+                return new UsernamePasswordAuthenticationToken(user.get().getUsername(), "", user.get().getAuthorities());
+            } else {
+                throw new BadCredentialsException("User sub not found.");
             }
         }
         Optional<com.juviner.juvinerwebbackend.userservice.User> user = this.userDao.findByUsername(username);

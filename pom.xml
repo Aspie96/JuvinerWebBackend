@@ -120,6 +120,11 @@
 	  <artifactId>spring-boot-starter-webflux</artifactId>
 	  <type>jar</type>
 	 </dependency>
+	 <dependency>
+	  <groupId>com.google.api-client</groupId>
+	  <artifactId>google-api-client</artifactId>
+	  <version>1.31.4</version>
+	 </dependency>
 	</dependencies>
 
 	<build>
