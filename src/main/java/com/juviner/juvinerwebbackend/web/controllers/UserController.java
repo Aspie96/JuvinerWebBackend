@@ -18,6 +18,9 @@ class UserController {
     
     @GetMapping
     public String home(Model model, @PathVariable String username) {
+        if(username.equals("self")) {
+            return "user_self_page";
+        }
         User user = clients.usersClient().get().uri("/{username}", username).retrieve().bodyToMono(User.class).block();
         model.addAttribute("user", user);
         return "user_page";

@@ -119,7 +119,7 @@ GoldenRoute.addRoute("/", function(params, query, callback) {
 	call("/api/sections/root", function(data, error) {
 		getTemplate("home", function(template) {
 			main.innerHTML = Mustache.render(template, { root: data });
-			callback("titolo");
+			callback("Juviner Home");
 		});
 	});
 });
@@ -143,7 +143,7 @@ GoldenRoute.addRoute("/thread/:id", function(params, query, callback) {
 					d.session = session.username;
 				}
 				main.innerHTML = Mustache.render(template, d);
-				callback("titolo");
+				callback(d.thread.title);
 			});
 		});
 	});
@@ -157,7 +157,7 @@ GoldenRoute.addRoute("/category/:id", function(params, query, callback) {
 					category: category,
 					threads: threads
 				});
-				callback("titolo");
+				callback(category.name);
 			});
 		});
 	});
@@ -174,7 +174,7 @@ GoldenRoute.addRoute("/user/self", function(params, query, callback) {
 			gapi.signin2.render("googleLogin", {
 				onsuccess: onGoogleConnect
 			});
-			callback("titolo");
+			callback("User Details");
 		});
 	});
 });
@@ -183,7 +183,7 @@ GoldenRoute.addRoute("/user/:id", function(params, query, callback) {
 	call("/api/users/" + params.id, function(data, error) {
 		getTemplate("user", function(template) {
 			main.innerHTML = Mustache.render(template, { user: data });
-			callback("titolo");
+			callback(data.username);
 		});
 	});
 });
@@ -194,7 +194,7 @@ GoldenRoute.addRoute("/login", function(params, query, callback) {
 		gapi.signin2.render("googleLogin", {
 			onsuccess: onGoogleLogin
 		});
-		callback("titolo");
+		callback("Login");
 	});
 });
 
@@ -202,7 +202,7 @@ GoldenRoute.addRoute("/new", function(params, query, callback) {
 	call("/api/sections/", function(data, error) {
 		getTemplate("new_thread", function(template) {
 			main.innerHTML = Mustache.render(template, { sections: data });
-			callback("titolo");
+			callback("New Thread");
 		});
 	});
 });
@@ -218,16 +218,18 @@ GoldenRoute.addRoute("/register", function(params, query, callback) {
 			storedGoogleUser = null;
 		}
 		main.innerHTML = Mustache.render(template, obj);
-		callback("titolo");
+		callback("Register");
 	});
 });
 
 window.addEventListener("storage",function(event) {
-	if(event.key == "session") {
+	if(event.key == "session" && event.newValue) {
 		session = JSON.parse(event.newValue);
+		sessionStorage.setItem("auth", JSON.stringify(session));
 		updateMenu();
-	} else if(event.key == "getSession" && session) {
+	} else if(event.key == "getSession" && event.newValue && session) {
 		localStorage.setItem("session", JSON.stringify(session));
+		localStorage.removeItem("session");
 	}
 });
 
@@ -251,6 +253,7 @@ window.addEventListener("load", function() {
 				});
 				sessionStorage.setItem("auth", JSON.stringify(session));
 				localStorage.setItem("session", JSON.stringify(session));
+				localStorage.removeItem("session");
 			} else {
 				getTemplate("login", function(template) {
 					main.innerHTML = Mustache.render(template, { error: true });
@@ -268,6 +271,25 @@ window.addEventListener("load", function() {
 			githubToken: code
 		});
 		return false;
+	}
+	if(location.pathname == "/user/self") {
+		if(session) {
+			call("/api/users/self", function(data, error) {
+				if(userDescription != null) {
+					data.description = userDescription;
+					userDescription = null;
+				}
+				getTemplate("user_details", function(template) {
+					main.innerHTML = Mustache.render(template, { user: data });
+					gapi.signin2.render("googleLogin", {
+						onsuccess: onGoogleConnect
+					});
+					callback("User Details");
+				});
+			});
+		} else {
+			GoldenRoute.routeTo("/login");
+		}
 	}
 	if(location.pathname.startsWith("/thread/") && session) {
 		var thread_id = location.pathname.split("/")[2];
@@ -291,7 +313,7 @@ window.addEventListener("load", function() {
 			});
 		});
 	}
-	localStorage.setItem("getSession", "");
+	localStorage.setItem("getSession", "item");
 	localStorage.removeItem("getSession", "");
 });
 
@@ -377,8 +399,8 @@ function onGoogleLogin(googleUser) {
 }
 
 function onPostDelete(button) {
-	var first = document.querySelectorAll(".delete-button")[0];
-	if(button == first) {
+	var first = document.querySelectorAll(".post")[0];
+	if(first.contains(button)) {
 		$("#deleteThreadModal").modal();
 	} else {
 		window.deleteId = parseInt(button.getAttribute("data-id"));
@@ -412,6 +434,8 @@ function preservePage() {
 function onLogout() {
 	session = null;
 	sessionStorage.removeItem("auth");
+	sessionStorage.setItem("logout", "logout");
+	sessionStorage.removeItem("logout");
 	updateMenu(function() {});
 	return false;
 }
