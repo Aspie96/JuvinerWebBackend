@@ -230,6 +230,10 @@ window.addEventListener("storage",function(event) {
 	} else if(event.key == "getSession" && event.newValue && session) {
 		localStorage.setItem("session", JSON.stringify(session));
 		localStorage.removeItem("session");
+	} else if(event.key == "logout" && event.newValue) {
+		session = null;
+		sessionStorage.removeItem("auth");
+		updateMenu(function() {});
 	}
 });
 
@@ -434,8 +438,8 @@ function preservePage() {
 function onLogout() {
 	session = null;
 	sessionStorage.removeItem("auth");
-	sessionStorage.setItem("logout", "logout");
-	sessionStorage.removeItem("logout");
+	localStorage.setItem("logout", "logout");
+	localStorage.removeItem("logout");
 	updateMenu(function() {});
 	return false;
 }
