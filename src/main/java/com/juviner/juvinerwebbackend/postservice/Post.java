@@ -2,6 +2,7 @@ package com.juviner.juvinerwebbackend.postservice;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -51,5 +52,9 @@ public class Post implements Serializable {
     
     public int getThreadId() {
         return this.threadId;
+    }
+    
+    public String getStringTime() {
+        return new SimpleDateFormat("dd/MM/yyyy hh:mm").format(this.getTime());
     }
 }

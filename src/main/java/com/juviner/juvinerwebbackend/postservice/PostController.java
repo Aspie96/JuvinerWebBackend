@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,7 +42,8 @@ public class PostController {
     }
     
     @RabbitListener(queues="thread-deleted")
-    public void receive(int threadId) {
+    @Transactional
+    public void receive(Integer threadId) {
         this.postDao.deleteByThreadId(threadId);
     }
     
@@ -53,11 +55,12 @@ public class PostController {
     
     @GetMapping("/thread/{threadId}")
     public List<Post> getUser(@PathVariable int threadId) {
-        List<Post> posts = this.postDao.findByThreadId(threadId);
+        List<Post> posts = this.postDao.findByThreadIdOrderByTimeAsc(threadId);
         return posts;
     }
     
     @PostMapping("/thread/{threadId}")
+    @Transactional
     public ResponseEntity post(Authentication auth, @PathVariable int threadId, @RequestBody Map<String, Object> body) {
         if(this.postDao.existsByThreadId(threadId)) {
             long time = System.currentTimeMillis();
@@ -74,17 +77,18 @@ public class PostController {
     }
     
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity delete(Authentication auth, @PathVariable int id) {
         Optional<Post> post = this.postDao.findById(id);
         if(post.isPresent()) {
             if(auth.getName().equals(post.get().getUsername())) {
-                if(this.postDao.findFirstByThreadId(post.get().getThreadId()).get().getId() == post.get().getId()) {
+                if(this.postDao.findFirstByThreadIdOrderByTimeAsc(post.get().getThreadId()).get().getId() == post.get().getId()) {
                     return new ResponseEntity(HttpStatus.BAD_REQUEST);
                 } else {
                     this.postDao.delete(post.get());
                     HashMap<String, Object> message = new HashMap<>();
                     message.put("thread_id", post.get().getThreadId());
-                    message.put("time", (long)this.postDao.findFirstByThreadId(post.get().getThreadId()).get().getTime().getTime());
+                    message.put("time", (long)this.postDao.findFirstByThreadIdOrderByTimeDesc(post.get().getThreadId()).get().getTime().getTime());
                     template.convertAndSend(this.deletedQueue.getName(), message);
                     System.out.println("Del post");
                     return new ResponseEntity(HttpStatus.OK);
