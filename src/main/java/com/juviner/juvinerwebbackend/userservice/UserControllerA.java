@@ -43,6 +43,7 @@ import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.TokenRequest;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeTokenGranter;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -79,10 +80,14 @@ public class UserControllerA {
     }
 
     @GetMapping("/{username}")
-    public User getUser(@PathVariable String username) {
+    public ResponseEntity<PublicUser> getUser(@PathVariable String username) {
         System.out.println(username);
         Optional<User> user = this.userDao.findByUsername(username);
-        return user.get();
+        if(user.isPresent()) {
+            return new ResponseEntity(new PublicUser(user.get()), HttpStatus.OK);
+        } else {
+            return new ResponseEntity(HttpStatus.NOT_FOUND);
+        }
     }
     
     @Autowired
@@ -100,18 +105,19 @@ public class UserControllerA {
     }
     
     @PutMapping("/self")
-    public ResponseEntity<User> postDetails(Authentication auth, @RequestBody Map<String, Object> body) {
+    @Transactional
+    public ResponseEntity<PrivateUser> postDetails(Authentication auth, @RequestBody Map<String, Object> body) {
         User old = this.userDao.findByUsername(auth.getName()).get();
         String description;
         String googleSub;
         int githubId;
         String githubUsername;
-        if(body.containsKey("description")) {
+        if(body.get("description") != null) {
             description = (String)body.get("description");
         } else {
             description = old.getDescription();
         }
-        if(body.containsKey("googleId")) {
+        if(body.get("googleId") != null) {
             String token = (String)body.get("googleId");
             if(token.equals("r")) {
                 googleSub = null;
@@ -127,7 +133,7 @@ public class UserControllerA {
         } else {
             googleSub = old.getGoogleSub();
         }
-        if(body.containsKey("githubToken")) {
+        if(body.get("githubToken") != null) {
             String code = (String)body.get("githubToken");
             if(code.equals("r")) {
                 githubId = 0;
@@ -161,13 +167,14 @@ public class UserControllerA {
         }
         User newU = new User(old.getId(), old.getUsername(), description, old.getEmail(), old.getPassword(), githubId, githubUsername, googleSub);
         User u = this.userDao.save(newU);
-        return new ResponseEntity(u, HttpStatus.OK);
+        return new ResponseEntity(new PrivateUser(u), HttpStatus.OK);
     }
    
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody Map<String, Object> body) {
+    @Transactional
+    public ResponseEntity<PrivateUser> register(@RequestBody Map<String, Object> body) {
         String googleSub = null;
-        if(body.containsKey("googleId")) {
+        if(body.get("googleId") != null) {
             String token = (String)body.get("googleId");
             
             GoogleIdToken googleIdToken = googleIdTokenVerifierService.verify(token);
@@ -180,8 +187,8 @@ public class UserControllerA {
         if(this.userDao.findByUsername((String)body.get("username")).isPresent()) {
             return new ResponseEntity(HttpStatus.BAD_REQUEST);
         }
-        User user = new User((String)body.get("username"), (String)body.get("description"), (String)body.get("email"), passwordEncoder.encode((String)body.get("password")), null, 0, null, googleSub);
-        return new ResponseEntity(this.userDao.save(user), HttpStatus.OK);
+        User user = new User((String)body.get("username"), (String)body.get("description"), (String)body.get("email"), passwordEncoder.encode((String)body.get("password")), 0, null, googleSub);
+        return new ResponseEntity(new PrivateUser(this.userDao.save(user)), HttpStatus.OK);
     }
     
     private OAuth2AccessToken loginThirdParty(Authentication authentication) {
@@ -220,7 +227,7 @@ public class UserControllerA {
         return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(new InputStreamResource(new ClassPathResource("nerd-pngrepo-com.png").getInputStream()));
     }
     
-    @GetMapping(value="{username}/avatar")
+    @GetMapping(value="/{username}/avatar")
     public Mono<ResponseEntity<byte[]>> getAvatar(@PathVariable String username) throws NoSuchAlgorithmException {
         String email = userDao.findByUsername(username).get().getEmail();
         MessageDigest md = MessageDigest.getInstance("MD5");

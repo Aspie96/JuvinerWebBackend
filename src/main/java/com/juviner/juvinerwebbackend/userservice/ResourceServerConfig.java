@@ -25,7 +25,7 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
         http.anonymous()
             .and()
             .authorizeRequests()
-            .antMatchers(HttpMethod.POST, "/").authenticated()
+            .antMatchers("/self").authenticated()
             .antMatchers("/**").permitAll()
             .and()
             .addFilterBefore(
@@ -35,6 +35,6 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
             .addFilterBefore(
                 new GithubAuthenticationFilter(authenticationManager, "/login/github"),
                 UsernamePasswordAuthenticationFilter.class
-            );;
+            );
     }
 }

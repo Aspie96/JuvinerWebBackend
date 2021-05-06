@@ -52,7 +52,7 @@ public class User implements Serializable, UserDetails {
         this.googleSub = googleSub;
     }
     
-    public User(String username, String description, String email, String password, String avatar, int githubId, String githubUsername, String googleSub) {
+    public User(String username, String description, String email, String password, int githubId, String githubUsername, String googleSub) {
         this.description = description; this.username = username;
         this.email = email;
         this.password = password;
