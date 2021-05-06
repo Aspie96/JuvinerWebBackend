@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.transaction.Transactional;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -34,6 +35,7 @@ public class ThreadController {
     private final Queue deletedQueue;
     
     @RabbitListener(queues="post-created")
+    @Transactional
     public void receivePostCreated(HashMap<String, Object> message) {
         Thread thread = threadDao.findById((int)message.get("thread_id")).get();
         Thread newThread = new Thread(thread.getId(), thread.getTitle(), thread.getCategoryId(), thread.getUsername(), thread.getText(), thread.getReplies() + 1, new Timestamp((Long)message.get("time")));
@@ -41,6 +43,7 @@ public class ThreadController {
     }
     
     @RabbitListener(queues="post-deleted")
+    @Transactional
     public void receivePostDeleted(HashMap<String, Object> message) {
         System.out.println("Del post");
         Thread thread = threadDao.findById((int)message.get("thread_id")).get();
@@ -55,14 +58,18 @@ public class ThreadController {
     }
 
     @GetMapping("/{id}")
-    public Thread getThread(@PathVariable int id) {
+    public ResponseEntity<Thread> getThread(@PathVariable int id) {
         Optional<Thread> thread = this.threadDao.findById(id);
-        return thread.get();
+        if(thread.isPresent()) {
+            return new ResponseEntity(thread.get(), HttpStatus.OK);
+        } else {
+            return new ResponseEntity(HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("/category/{categoryId}")
     public List<Thread> getByCategory(@PathVariable int categoryId) {
-        List<Thread> list = this.threadDao.findByCategoryId(categoryId);
+        List<Thread> list = this.threadDao.findByCategoryIdOrderByUpdatetimeDesc(categoryId);
         return list;
     }
 
@@ -83,6 +90,7 @@ public class ThreadController {
     }
     
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity deleteThread(Authentication auth, @PathVariable int id) {
         Optional<Thread> thread = this.threadDao.findById(id);
         if(thread.isPresent()) {

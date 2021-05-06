@@ -26,27 +26,36 @@ public class Thread implements Serializable {
     @Column(nullable=false)
     private int replies;
     @Column(nullable=false)
-    private Timestamp updateTime;
+    private Timestamp updatetime;
 
     public Thread() { }
 
-    public Thread(int id, String title, int categoryId, String username, String text, int replies, Timestamp updateTime) {
+    public Thread(int id, String title, int categoryId, String username, String text, int replies, Timestamp updatetime) {
         this.id = id;
         this.title = title;
         this.categoryId = categoryId;
         this.username = username;
         this.text = text;
         this.replies = replies;
-        this.updateTime = updateTime;
+        this.updatetime = updatetime;
     }
     
-    public Thread(String title, int categoryId, String username, String text, Timestamp updateTime) {
+    public Thread(String title, int categoryId, String username, String text, int replies, Timestamp updatetime) {
+        this.title = title;
+        this.categoryId = categoryId;
+        this.username = username;
+        this.text = text;
+        this.replies = replies;
+        this.updatetime = updatetime;
+    }
+    
+    public Thread(String title, int categoryId, String username, String text, Timestamp updatetime) {
         this.title = title;
         this.categoryId = categoryId;
         this.username = username;
         this.text = text;
         this.replies = 0;
-        this.updateTime = updateTime;
+        this.updatetime = updatetime;
     }
 
     public int getId() {
@@ -73,7 +82,7 @@ public class Thread implements Serializable {
         return this.replies;
     }
     
-    public Timestamp getUpdateTime() {
-        return this.updateTime;
+    public Timestamp getUpdatetime() {
+        return this.updatetime;
     }
 }
