@@ -30,6 +30,12 @@ public class Category implements Serializable {
     
     public Category() { }
     
+    public Category(Section section, String name, String description) {
+        this.section = section;
+        this.name = name;
+        this.description = description;
+    }
+    
     public int getId() {
         return this.id;
     }
